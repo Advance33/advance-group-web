@@ -1,0 +1,6 @@
+# Config local de deploys — no va al repo
+.vercel
+.netlify
+
+# Basura de macOS
+.DS_Store
