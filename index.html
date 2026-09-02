@@ -24,22 +24,31 @@
 <link rel="icon" type="image/png" href="/favicon.png">
 
 <!-- ============================================================
-     MEDICIÓN — Google Analytics 4 + Google Ads
+     MEDICIÓN — Google Analytics 4 + Google Ads + Pixel de Meta
      ------------------------------------------------------------
-     PEGÁ LOS TRES IDs ACÁ ABAJO. Mientras digan XXXX el tracking
-     queda apagado solo: no carga ningún script y no rompe nada.
+     PEGÁ LOS IDs ACÁ ABAJO. Mientras digan XXXX el tracking queda
+     apagado solo: no carga ningún script y no rompe nada. Los tres
+     bloques son independientes — se puede prender el de Meta sin
+     tocar los de Google, y al revés.
+
+     Detalle de dónde sacar cada ID: ver MEDICION.md
 
      GA4_ID    → Analytics ▸ Administrar ▸ Flujos de datos ▸ "G-…"
      ADS_ID    → Google Ads ▸ Herramientas ▸ Conversiones ▸ "AW-…"
      ADS_LABEL → misma pantalla, lo que va DESPUÉS de la barra
                  (en "AW-123456789/AbC-D_efG" la etiqueta es AbC-D_efG)
+     PIXEL_ID  → Meta ▸ Administrador de eventos ▸ Orígenes de datos ▸
+                 el número de 15-16 dígitos del pixel (solo números)
      ============================================================ -->
 <script>
   window.ADV_TRACKING = {
     GA4_ID:    'G-XXXXXXXXXX',
     ADS_ID:    'AW-XXXXXXXXX',
-    ADS_LABEL: 'XXXXXXXXXXXXXXXXXX'
+    ADS_LABEL: 'XXXXXXXXXXXXXXXXXX',
+    PIXEL_ID:  'XXXXXXXXXXXXXXX'
   };
+
+  // --- Google (GA4 + Ads) ---
   (function () {
     var t = window.ADV_TRACKING, ids = [];
     if (t.GA4_ID.indexOf('X') < 0) ids.push(t.GA4_ID);
@@ -53,6 +62,22 @@
     s.async = true;
     s.src = 'https://www.googletagmanager.com/gtag/js?id=' + ids[0];
     document.head.appendChild(s);
+  })();
+
+  // --- Meta (pixel) ---
+  (function () {
+    var id = (window.ADV_TRACKING.PIXEL_ID || '');
+    if (id.indexOf('X') >= 0) return;  // sin ID cargado no pedimos nada a Meta
+    !function (f, b, e, v, n, t, s) {
+      if (f.fbq) return; n = f.fbq = function () {
+        n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments);
+      };
+      if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = '2.0';
+      n.queue = []; t = b.createElement(e); t.async = !0; t.src = v;
+      s = b.getElementsByTagName(e)[0]; s.parentNode.insertBefore(t, s);
+    }(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', id);
+    fbq('track', 'PageView');
   })();
 </script>
 
@@ -204,6 +229,13 @@
 </script>
 </head>
 <body>
+
+<!-- Pixel de Meta para visitantes sin JavaScript. Descomentar SOLO cuando
+     PIXEL_ID esté cargado arriba, y reemplazar los XXXX por el mismo número:
+     mientras sea placeholder no tiene que pegarle a Meta.
+<noscript><img height="1" width="1" style="display:none" alt=""
+  src="https://www.facebook.com/tr?id=XXXXXXXXXXXXXXX&ev=PageView&noscript=1"></noscript>
+-->
 <style>
 @font-face{font-family:"Halagar";src:url(/fonts/halagar.woff2) format("woff2");font-weight:100 900;font-style:normal;font-display:swap;}
 
@@ -1278,15 +1310,30 @@
 <script>
   // ---------- Medición de conversiones ----------
   // Todas las conversiones de este sitio son salidas a WhatsApp. Registramos cada una
-  // como evento de GA4 y, si hay etiqueta de Ads cargada, también como conversión.
+  // como evento de GA4, como conversión de Ads si hay etiqueta cargada, y como evento
+  // del pixel de Meta. Las tres patas son independientes: la que no tenga ID cargado se
+  // saltea sola, así prender una no depende de las otras.
   const ADS = window.ADV_TRACKING || {};
   const adsListo = ADS.ADS_ID && ADS.ADS_ID.indexOf('X') < 0 &&
                    ADS.ADS_LABEL && ADS.ADS_LABEL.indexOf('X') < 0;
 
+  // Nombre del evento de GA4 → evento estándar de Meta. Lo que no esté en esta tabla
+  // se manda como personalizado, para no inventar estándares que Meta no reconoce.
+  const META_EVENTOS = {
+    whatsapp_click: 'Contact',
+    generate_lead:  'Lead'
+  };
+
   function advTrack(evento, params) {
-    if (typeof gtag !== 'function') return;   // sin IDs cargados no hay nada que enviar
-    gtag('event', evento, params || {});
-    if (adsListo) gtag('event', 'conversion', { send_to: ADS.ADS_ID + '/' + ADS.ADS_LABEL });
+    if (typeof gtag === 'function') {
+      gtag('event', evento, params || {});
+      if (adsListo) gtag('event', 'conversion', { send_to: ADS.ADS_ID + '/' + ADS.ADS_LABEL });
+    }
+    if (typeof fbq === 'function') {
+      const estandar = META_EVENTOS[evento];
+      if (estandar) fbq('track', estandar, params || {});
+      else          fbq('trackCustom', evento, params || {});
+    }
   }
   window.advTrack = advTrack;
 
