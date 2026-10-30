@@ -723,6 +723,18 @@
   .sector h3 { font-family: var(--display); text-transform: uppercase; font-weight: 700; font-size: .98rem; margin: 0; letter-spacing: .01em; }
   .sector p { margin: 0; color: var(--muted); font-size: .9rem; }
 
+  /* ---------- Cotizaciones ya hechas ---------- */
+  .quotes-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; margin-top: 3rem; }
+  @media (max-width: 760px) { .quotes-grid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 440px) { .quotes-grid { grid-template-columns: 1fr; } }
+  .quote-card { background: var(--surface); padding: 1.7rem 1.6rem; display: flex; flex-direction: column; gap: .65rem; }
+  .quote-tag { align-self: flex-start; font-family: var(--mono); font-size: .68rem; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); background: var(--accent-soft); padding: .25rem .6rem; border-radius: 999px; }
+  .quote-card h3 { font-family: var(--display); text-transform: uppercase; font-weight: 700; font-size: .98rem; margin: 0; letter-spacing: .01em; }
+  .quote-card p { margin: 0; color: var(--muted); font-size: .88rem; line-height: 1.5; }
+  .quote-foot { display: flex; align-items: baseline; justify-content: space-between; gap: .6rem; margin-top: auto; padding-top: .9rem; border-top: 1px solid var(--line); }
+  .quote-foot strong { font-family: var(--display); font-size: 1.05rem; color: var(--ink); }
+  .quote-foot span { font-family: var(--mono); font-size: .76rem; color: var(--muted); }
+
   /* ---------- Orígenes ---------- */
   .origins { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.1rem; margin-top: 3rem; }
   @media (max-width: 760px) { .origins { grid-template-columns: 1fr 1fr; } }
@@ -1174,11 +1186,25 @@
   </section>
 
   <!-- FORMULARIO -->
+  <!-- COTIZACIONES YA HECHAS -->
+  <section id="cotizaciones" class="reveal" hidden>
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <div>
+          <span class="idx">08 — COTIZACIONES</span>
+          <h2>Así cotizamos importaciones reales</h2>
+        </div>
+        <p class="sec-sub">Presupuestos ya enviados a clientes, con el mismo costo final que vas a recibir vos.</p>
+      </div>
+      <div class="quotes-grid" id="quotesGrid"></div>
+    </div>
+  </section>
+
   <section id="cotizar">
     <div class="wrap">
       <div class="sec-head reveal">
         <div>
-          <span class="idx">08 — COTIZÁ</span>
+          <span class="idx">09 — COTIZÁ</span>
           <h2>Pedí tu cotización</h2>
         </div>
         <p class="sec-sub">Contanos qué necesitás y te respondemos por WhatsApp con un costo estimado.</p>
@@ -1711,6 +1737,37 @@
   }, { threshold: 0.35 });
   const procSec = document.getElementById('proceso');
   if (procSec) procObs.observe(procSec);
+
+  // ---------- Cotizaciones ya hechas (en vivo desde ADVAPP) ----------
+  // El equipo marca desde ADVAPP (Oportunidades → botón "Mostrar en landing")
+  // qué presupuestos de Group se muestran acá. Resumen anónimo: nunca cliente
+  // ni teléfono. Si no hay ninguna marcada, la sección queda oculta.
+  fetch('https://advapp-blond.vercel.app/api/oportunidades?resource=landing-cotizaciones')
+    .then((r) => r.json())
+    .then((d) => {
+      const lista = Array.isArray(d.cotizaciones) ? d.cotizaciones : [];
+      if (!lista.length) return;
+      const grid = document.getElementById('quotesGrid');
+      const sec = document.getElementById('cotizaciones');
+      if (!grid || !sec) return;
+      grid.innerHTML = lista.map((c) => {
+        const monto = Math.round(Number(c.monto) || 0).toLocaleString('es-AR');
+        const fecha = c.fecha ? new Date(c.fecha).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
+        return '<div class="quote-card">'
+          + '<span class="quote-tag">' + escHtml(c.rubro || '') + '</span>'
+          + '<h3>' + escHtml(c.nombre || '') + '</h3>'
+          + (c.descripcion ? '<p>' + escHtml(c.descripcion) + '</p>' : '')
+          + '<div class="quote-foot"><strong>US$ ' + monto + '</strong><span>' + fecha + '</span></div>'
+          + '</div>';
+      }).join('');
+      sec.hidden = false;
+      sec.classList.add('in');
+      grid.classList.add('in');
+    })
+    .catch(() => {});
+  function escHtml(s) {
+    return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
 </script>
 </body>
 </html>
