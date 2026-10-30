@@ -807,6 +807,7 @@
     </a>
     <nav class="nav-links">
       <a href="#unidades">Unidades</a>
+      <a href="#cotizaciones" id="navCotizaciones" hidden>Cotizaciones</a>
       <a href="#proceso">Proceso</a>
       <a href="#faq">FAQ</a>
       <a href="#cotizar">Cotizá</a>
@@ -1763,6 +1764,8 @@
       sec.hidden = false;
       sec.classList.add('in');
       grid.classList.add('in');
+      const navLink = document.getElementById('navCotizaciones');
+      if (navLink) navLink.hidden = false;
     })
     .catch(() => {});
   function escHtml(s) {
