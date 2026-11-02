@@ -745,9 +745,12 @@
   .cq-meta { font-family: var(--mono); font-size: .76rem; color: var(--muted); letter-spacing: .01em; margin-top: -.3rem; }
   .cq-meta .dot { opacity: .5; margin: 0 .05rem; }
   .cq-card p { margin: 0; color: var(--muted); font-size: .9rem; line-height: 1.5; }
-  .cq-foot { display: flex; align-items: baseline; justify-content: space-between; gap: .6rem; margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--line); }
-  .cq-foot strong { font-family: var(--display); font-size: 1.2rem; color: var(--ink); }
-  .cq-foot span { font-family: var(--mono); font-size: .78rem; color: var(--muted); }
+  .cq-price { margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: .4rem; }
+  .cq-price-row { display: flex; align-items: baseline; justify-content: space-between; gap: .6rem; font-family: var(--mono); font-size: .78rem; color: var(--muted); }
+  .cq-price-row strong { font-family: var(--display); font-size: .92rem; color: var(--ink); font-weight: 700; }
+  .cq-price-row.main span { color: var(--ink); font-weight: 600; }
+  .cq-price-row.main strong { font-size: 1.25rem; }
+  .cq-date { font-family: var(--mono); font-size: .72rem; color: var(--muted); text-align: right; margin-top: .2rem; }
   .cq-empty { color: var(--muted); font-size: .95rem; padding: 3rem 0; text-align: center; }
   .cq-empty a { color: var(--ink); }
   .cq-skel { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; height: 190px; animation: cqPulse 1.3s ease-in-out infinite; }
@@ -1293,12 +1296,17 @@
       if (c.via) meta.push(esc(c.via));
       if (c.plazo_dias) meta.push('~' + esc(String(c.plazo_dias)) + ' días');
       if (c.hs_code) meta.push('HS ' + esc(c.hs_code));
+      var priceRows = '';
+      if (c.monto_sin_iva != null) priceRows += '<div class="cq-price-row"><span>Sin IVA</span><strong>US$ ' + fmtMonto(c.monto_sin_iva) + '</strong></div>';
+      priceRows += '<div class="cq-price-row main"><span>Total c/IVA</span><strong>US$ ' + fmtMonto(c.monto) + '</strong></div>';
+      if (c.senia != null) priceRows += '<div class="cq-price-row"><span>Seña</span><strong>US$ ' + fmtMonto(c.senia) + '</strong></div>';
       return '<div class="cq-card reveal in">'
         + '<span class="cq-tag">' + esc(c.rubro || '') + '</span>'
         + '<h3>' + esc(c.nombre || '') + '</h3>'
         + (meta.length ? '<div class="cq-meta">' + meta.join(' <span class="dot">·</span> ') + '</div>' : '')
         + (c.descripcion ? '<p>' + esc(c.descripcion) + '</p>' : '')
-        + '<div class="cq-foot"><strong>US$ ' + fmtMonto(c.monto) + '</strong><span>' + fmtFecha(c.fecha) + '</span></div>'
+        + '<div class="cq-price">' + priceRows + '</div>'
+        + '<div class="cq-date">' + fmtFecha(c.fecha) + '</div>'
         + '</div>';
     }).join('');
   }
