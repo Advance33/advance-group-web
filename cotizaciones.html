@@ -742,6 +742,8 @@
   .cq-card:hover { border-color: var(--ink); transform: translateY(-2px); }
   .cq-tag { align-self: flex-start; font-family: var(--mono); font-size: .68rem; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); background: var(--accent-soft); padding: .3rem .7rem; border-radius: 999px; }
   .cq-card h3 { font-family: var(--display); text-transform: uppercase; font-weight: 700; font-size: 1.05rem; margin: 0; letter-spacing: .01em; line-height: 1.3; }
+  .cq-meta { font-family: var(--mono); font-size: .76rem; color: var(--muted); letter-spacing: .01em; margin-top: -.3rem; }
+  .cq-meta .dot { opacity: .5; margin: 0 .05rem; }
   .cq-card p { margin: 0; color: var(--muted); font-size: .9rem; line-height: 1.5; }
   .cq-foot { display: flex; align-items: baseline; justify-content: space-between; gap: .6rem; margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--line); }
   .cq-foot strong { font-family: var(--display); font-size: 1.2rem; color: var(--ink); }
@@ -1286,9 +1288,15 @@
     var list = state.active === 'all' ? state.all : state.all.filter(function (c) { return (c.rubro || 'Otro') === state.active; });
     if (count) count.textContent = list.length + (list.length === 1 ? ' cotización' : ' cotizaciones');
     grid.innerHTML = list.map(function (c) {
+      var meta = [];
+      if (c.origen) meta.push(esc(c.origen));
+      if (c.via) meta.push(esc(c.via));
+      if (c.plazo_dias) meta.push('~' + esc(String(c.plazo_dias)) + ' días');
+      if (c.hs_code) meta.push('HS ' + esc(c.hs_code));
       return '<div class="cq-card reveal in">'
         + '<span class="cq-tag">' + esc(c.rubro || '') + '</span>'
         + '<h3>' + esc(c.nombre || '') + '</h3>'
+        + (meta.length ? '<div class="cq-meta">' + meta.join(' <span class="dot">·</span> ') + '</div>' : '')
         + (c.descripcion ? '<p>' + esc(c.descripcion) + '</p>' : '')
         + '<div class="cq-foot"><strong>US$ ' + fmtMonto(c.monto) + '</strong><span>' + fmtFecha(c.fecha) + '</span></div>'
         + '</div>';
